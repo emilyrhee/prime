@@ -1,17 +1,17 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <termios.h>
+#include <signal.h>
 
-void setNonCanonicalMode() {
-    struct termios term;
-    tcgetattr(STDIN_FILENO, &term);
+volatile sig_atomic_t stop = 0;
+int number = 2;
+
+void setNonCanonicalMode(struct termios term) {
     term.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
 
-void setCanonicalMode() {
-    struct termios term;
-    tcgetattr(STDIN_FILENO, &term);
+void setCanonicalMode(struct termios term) {
     term.c_lflag |= ICANON | ECHO;
     tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
@@ -24,27 +24,30 @@ char isPrime(int number) {
     return 1;
 }
 
+void handle_signal(int signal) {
+    if (signal == SIGINT) {
+        printf("%d\n", number);
+        stop = 1;
+    }
+}
+
 int main() {
-    int number = 2; // 2 is the first prime number
-    setNonCanonicalMode();
+    struct termios term;
+    tcgetattr(STDIN_FILENO, &term);
 
-    while (1) {
+    setNonCanonicalMode(term);
+
+    signal(SIGINT, handle_signal);
+
+    while (number < 200) {
         if (isPrime(number)) {
-            printf("%-8d    Quit [y/n]? ", number);
-            fflush(stdout);
-
-            char input;
-            read(STDIN_FILENO, &input, 1);
-            printf("%c\n", input);
-            if (input == 'y' || input == 'Y') {
-                setCanonicalMode();
-                return 0;
-            }
+            sleep(1);
         }
 
         number++;
     }
 
-    setCanonicalMode();
+    setCanonicalMode(term);
     return 0;
 }
+
