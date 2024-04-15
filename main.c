@@ -2,16 +2,21 @@
 #include <unistd.h>
 #include <termios.h>
 #include <signal.h>
+#include <stdlib.h>
 
 volatile sig_atomic_t stop = 0;
 int number = 2;
 
-void setNonCanonicalMode(struct termios term) {
+void setNonCanonicalMode() {
+    struct termios term;
+    tcgetattr(STDIN_FILENO, &term);
     term.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
 
-void setCanonicalMode(struct termios term) {
+void setCanonicalMode() {
+    struct termios term;
+    tcgetattr(STDIN_FILENO, &term);
     term.c_lflag |= ICANON | ECHO;
     tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
@@ -26,16 +31,23 @@ char isPrime(int number) {
 
 void handle_signal(int signal) {
     if (signal == SIGINT) {
-        printf("%d\n", number);
+        printf("%-8dQuit [y/n]? ", number);
+        fflush(stdout);
+
+        char input;
+        read(STDIN_FILENO, &input, 1);
+        printf("%c\n", input);
+        if (input == 'y' || input == 'Y') {
+            setCanonicalMode();
+            exit(0);
+        }
+
         stop = 1;
     }
 }
 
 int main() {
-    struct termios term;
-    tcgetattr(STDIN_FILENO, &term);
-
-    setNonCanonicalMode(term);
+    setNonCanonicalMode();
 
     signal(SIGINT, handle_signal);
 
@@ -47,7 +59,7 @@ int main() {
         number++;
     }
 
-    setCanonicalMode(term);
+    setCanonicalMode();
     return 0;
 }
 
