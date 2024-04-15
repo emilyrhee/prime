@@ -4,7 +4,6 @@
 #include <signal.h>
 #include <stdlib.h>
 
-volatile sig_atomic_t stop = 0;
 int number = 2;
 
 void setNonCanonicalMode() {
@@ -41,8 +40,6 @@ void handle_signal(int signal) {
             setCanonicalMode();
             exit(0);
         }
-
-        stop = 1;
     }
 }
 
@@ -59,7 +56,5 @@ int main() {
         number++;
     }
 
-    setCanonicalMode();
     return 0;
 }
-
