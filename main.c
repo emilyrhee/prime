@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 
 char isPrime(int number) {
     for (int i = 2; i < number; i++) { // every number is divisible by 1, so start at 2
@@ -9,12 +10,15 @@ char isPrime(int number) {
 }
 
 int main() {
-    int number = 20;
+    int number = 2;
 
-    if (isPrime(number)) {
-        printf("%d is prime\n", number);
-    } else {
-        printf("%d is not prime\n", number);
+    while (number < 200) {
+        if (isPrime(number)) {
+            printf("%d\n", number);
+            sleep(1);
+        }
+
+        number++;
     }
 
     return 0;
